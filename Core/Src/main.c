@@ -23,6 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "w25q.h"
 
 /* USER CODE END Includes */
 
@@ -95,12 +96,16 @@ int main(void)
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
+  flash_schedule_t flash_data;
+  flash_schedule_init(&flash_data);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    int waiting = flash_schedule_next(&flash_data);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
