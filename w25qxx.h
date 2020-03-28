@@ -65,10 +65,16 @@ extern w25qxx_t	w25qxx;
 //############################################################################
 bool		W25qxx_Init(void);
 
+bool 		W25qxx_CheckForWriteEndAndUnlock();
+
 void		W25qxx_EraseChip(void);
+bool		W25qxx_EraseChip_Initiate(void);
 void 		W25qxx_EraseSector(uint32_t SectorAddr);
+bool 		W25qxx_EraseSector_Initiate(uint32_t SectorAddr);
 void 		W25qxx_EraseBlock(uint32_t BlockAddr);
+bool 		W25qxx_EraseBlock_Initiate(uint32_t BlockAddr);
 void 		W25qxx_Erase32kBlock(uint32_t Block32kAddr);
+bool 		W25qxx_Erase32kBlock_Initiate(uint32_t Block32kAddr);
 
 uint32_t	W25qxx_PageToSector(uint32_t	PageAddress);
 uint32_t	W25qxx_PageToBlock(uint32_t	PageAddress);
@@ -81,13 +87,18 @@ bool 		W25qxx_IsEmptySector(uint32_t Sector_Address,uint32_t OffsetInByte,uint32
 bool 		W25qxx_IsEmptyBlock(uint32_t Block_Address,uint32_t OffsetInByte,uint32_t NumByteToCheck_up_to_BlockSize);
 
 void 		W25qxx_WriteByte(uint8_t pBuffer,uint32_t Bytes_Address);
+bool 		W25qxx_WriteByte_Initiate(uint8_t pBuffer,uint32_t Bytes_Address);
 void 		W25qxx_WritePage(uint8_t *pBuffer	,uint32_t Page_Address,uint32_t OffsetInByte,uint32_t NumByteToWrite_up_to_PageSize);
+bool 		W25qxx_WritePage_Initiate(uint8_t *pBuffer	,uint32_t Page_Address,uint32_t OffsetInByte,uint32_t NumByteToWrite_up_to_PageSize);
 void 		W25qxx_WriteSector(uint8_t *pBuffer,uint32_t Sector_Address,uint32_t OffsetInByte,uint32_t NumByteToWrite_up_to_SectorSize);
 void 		W25qxx_WriteBlock(uint8_t* pBuffer,uint32_t Block_Address,uint32_t OffsetInByte,uint32_t NumByteToWrite_up_to_BlockSize);
 
 void 		W25qxx_ReadByte(uint8_t *pBuffer,uint32_t Bytes_Address);
+bool 		W25qxx_ReadByte_Initiate(uint8_t *pBuffer,uint32_t Bytes_Address);
 void 		W25qxx_ReadBytes(uint8_t *pBuffer,uint32_t ReadAddr,uint32_t NumByteToRead);
+bool 		W25qxx_ReadBytes_Initiate(uint8_t *pBuffer,uint32_t ReadAddr,uint32_t NumByteToRead);
 void 		W25qxx_ReadPage(uint8_t *pBuffer,uint32_t Page_Address,uint32_t OffsetInByte,uint32_t NumByteToRead_up_to_PageSize);
+bool 		W25qxx_ReadPage_Initiate(uint8_t *pBuffer,uint32_t Page_Address,uint32_t OffsetInByte,uint32_t NumByteToRead_up_to_PageSize);
 void 		W25qxx_ReadSector(uint8_t *pBuffer,uint32_t Sector_Address,uint32_t OffsetInByte,uint32_t NumByteToRead_up_to_SectorSize);
 void 		W25qxx_ReadBlock(uint8_t* pBuffer,uint32_t Block_Address,uint32_t OffsetInByte,uint32_t	NumByteToRead_up_to_BlockSize);
 //############################################################################
