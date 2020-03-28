@@ -19,6 +19,16 @@
   First release.
 */
 
+/*
+
+Thomas Grill (grrrr.org)
+
+- More efficient code
+- Implemented DMA functionality
+- Non-blocking functions
+
+ */
+
 #ifdef __cplusplus
  extern "C" {
 #endif
