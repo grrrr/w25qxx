@@ -104,7 +104,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    int waiting = flash_schedule_next(&flash_data);
+    int idle = flash_schedule_next(&flash_data);
 
     /* USER CODE END WHILE */
 

@@ -32,6 +32,7 @@ int flash_schedule_next(flash_schedule_t *f)
   int waiting = 0;
 
   switch(f->status) {
+
     case STATUS_INIT: {
       f->loop = 0;
       f->sector = 0;
@@ -39,14 +40,17 @@ int flash_schedule_next(flash_schedule_t *f)
       f->status = STATUS_LOOP_START;
       break;
     }
+
     case STATUS_LOOP_START: {
       f->status = STATUS_READ_START;
       break;
     }
+
     case STATUS_READ_START: {
       f->status = STATUS_READ_NEXT;
       break;
     }
+
     case STATUS_READ_NEXT: {
       int rdy = 1; // TODO
       if(!rdy)
@@ -55,24 +59,29 @@ int flash_schedule_next(flash_schedule_t *f)
 	f->status = STATUS_READ_END;
       break;
     }
+
     case STATUS_READ_END: {
       f->status = STATUS_ERASE_BLOCK;
       break;
     }
+
     case STATUS_ERASE_BLOCK: {
       if(f->sector%(32/4) == 0)
 	W25qxx_Erase32k(f->sector/(32/4));
       f->status = STATUS_ERASE_CHECK;
       break;
     }
+
     case STATUS_ERASE_CHECK: {
       f->status = STATUS_WRITE_START;
       break;
     }
+
     case STATUS_WRITE_START: {
       f->status = STATUS_WRITE_NEXT;
       break;
     }
+
     case STATUS_WRITE_NEXT: {
       int rdy = 1; // TODO
       if(!rdy)
@@ -81,10 +90,12 @@ int flash_schedule_next(flash_schedule_t *f)
 	f->status = STATUS_WRITE_END;
       break;
     }
+
     case STATUS_WRITE_END: {
       f->status = STATUS_LOOP_END;
       break;
     }
+
     case STATUS_LOOP_END: {
       if(++f->sector >= w25qxx.SectorCount) {
 	  ++f->loop;
