@@ -76,6 +76,7 @@ extern w25qxx_t	w25qxx;
 bool		W25qxx_Init(void);
 
 bool 		W25qxx_CheckForWriteEndAndUnlock();
+bool 		W25qxx_CheckForReadEndAndUnlock();
 
 void		W25qxx_EraseChip(void);
 bool		W25qxx_EraseChip_Initiate(void);
