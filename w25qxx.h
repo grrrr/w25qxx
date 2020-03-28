@@ -23,8 +23,8 @@
  extern "C" {
 #endif
 
+#include "main.h"
 #include <stdbool.h>
-#include "spi.h"
 
 typedef enum
 {
@@ -68,6 +68,7 @@ bool		W25qxx_Init(void);
 void		W25qxx_EraseChip(void);
 void 		W25qxx_EraseSector(uint32_t SectorAddr);
 void 		W25qxx_EraseBlock(uint32_t BlockAddr);
+void 		W25qxx_Erase32kBlock(uint32_t Block32kAddr);
 
 uint32_t	W25qxx_PageToSector(uint32_t	PageAddress);
 uint32_t	W25qxx_PageToBlock(uint32_t	PageAddress);

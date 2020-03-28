@@ -325,6 +325,36 @@ void W25qxx_EraseBlock(uint32_t BlockAddr)
 	w25qxx.Lock=0;
 }
 //###################################################################################################################
+void W25qxx_Erase32kBlock(uint32_t BlockAddr)
+{
+	while(w25qxx.Lock==1)
+		W25qxx_Delay(1);
+	w25qxx.Lock=1;
+	#if (_W25QXX_DEBUG==1)
+	printf("w25qxx EraseBlock %d Begin...\r\n",BlockAddr);
+	W25qxx_Delay(100);
+	uint32_t	StartTime=HAL_GetTick();
+	#endif
+	W25qxx_WaitForWriteEnd();
+	BlockAddr = BlockAddr * w25qxx.SectorSize*8;
+  W25qxx_WriteEnable();
+  HAL_GPIO_WritePin(_W25QXX_CS_GPIO,_W25QXX_CS_PIN,GPIO_PIN_RESET);
+  W25qxx_Spi(0x52);
+	if(w25qxx.ID>=W25Q256)
+		W25qxx_Spi((BlockAddr & 0xFF000000) >> 24);
+  W25qxx_Spi((BlockAddr & 0xFF0000) >> 16);
+  W25qxx_Spi((BlockAddr & 0xFF00) >> 8);
+  W25qxx_Spi(BlockAddr & 0xFF);
+	HAL_GPIO_WritePin(_W25QXX_CS_GPIO,_W25QXX_CS_PIN,GPIO_PIN_SET);
+  W25qxx_WaitForWriteEnd();
+	#if (_W25QXX_DEBUG==1)
+	printf("w25qxx Erase32kBlock done after %d ms\r\n",HAL_GetTick()-StartTime);
+	W25qxx_Delay(100);
+	#endif
+	W25qxx_Delay(1);
+	w25qxx.Lock=0;
+}
+//###################################################################################################################
 uint32_t	W25qxx_PageToSector(uint32_t	PageAddress)
 {
 	return ((PageAddress*w25qxx.PageSize)/w25qxx.SectorSize);
