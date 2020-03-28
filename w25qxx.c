@@ -229,7 +229,7 @@ bool W25qxx_CheckForReadEndAndUnlock()
 #endif
   if(rdy) {
 #if (_W25QXX_DEBUG==1)
-    printf("w25qxx write process done after %d ms\r\n",HAL_GetTick()-StartTime);
+    printf("w25qxx read process done after %d ms\r\n",HAL_GetTick()-StartTime);
 #endif
     W25qxx_Unlock();
   }
