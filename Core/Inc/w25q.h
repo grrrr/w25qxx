@@ -19,7 +19,7 @@
 
 typedef struct {
   int status;
-  int run;
+  int loop;
   uint32_t sector;
   int test_offs;
   uint8_t *todo_buffer;
