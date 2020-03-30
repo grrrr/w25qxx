@@ -6,6 +6,6 @@
 #define _W25QXX_CS_PIN                FLASH_CS_Pin
 #define _W25QXX_USE_FREERTOS          0
 #define _W25QXX_DEBUG                 0
-#define _W25QXX_USE_DMA 	      1
+#define _W25QXX_USE_DMA 	      0 //1
 
 #endif
