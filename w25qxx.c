@@ -43,15 +43,14 @@ static void W25qxx_DMA_Callback(SPI_HandleTypeDef *hspi)
 #endif
 
 //###################################################################################################################
-static int W25qxx_AddressCmds(uint8_t *cmdbuf, uint32_t SectorAddr)
+static uint8_t *W25qxx_AddressCmds(uint8_t *cmdbuf, uint32_t SectorAddr)
 {
-  uint8_t *cmdp = cmdbuf;
   if(w25qxx.ID >= W25Q256)
-    (*cmdp++) = (SectorAddr & 0xFF000000) >> 24;
-  (*cmdp++) = (SectorAddr & 0xFF0000) >> 16;
-  (*cmdp++) = (SectorAddr & 0xFF00) >> 8;
-  (*cmdp++) = SectorAddr & 0xFF;
-  return cmdp-cmdbuf;
+    (*cmdbuf++) = (SectorAddr & 0xFF000000) >> 24;
+  (*cmdbuf++) = (SectorAddr & 0xFF0000) >> 16;
+  (*cmdbuf++) = (SectorAddr & 0xFF00) >> 8;
+  (*cmdbuf++) = SectorAddr & 0xFF;
+  return cmdbuf;
 }
 //###################################################################################################################
 static uint8_t W25qxx_Spi(uint8_t Data)
@@ -397,7 +396,7 @@ bool W25qxx_EraseSector_Initiate(uint32_t SectorAddr)
   W25qxx_WriteEnable();
   W25qxxSet();
   (*cmdp++) = (0x20);
-  cmdp += W25qxx_AddressCmds(cmdp, Addr);
+  cmdp = W25qxx_AddressCmds(cmdp, Addr);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
   W25qxxUnset();
   return true;
@@ -426,7 +425,7 @@ bool W25qxx_EraseBlock_Initiate(uint32_t BlockAddr)
   W25qxx_WriteEnable();
   W25qxxSet();
   (*cmdp++) = (0xD8);
-  cmdp += W25qxx_AddressCmds(cmdp, Addr);
+  cmdp = W25qxx_AddressCmds(cmdp, Addr);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
   W25qxxUnset();
   return true;
@@ -455,7 +454,7 @@ bool W25qxx_Erase32kBlock_Initiate(uint32_t BlockAddr)
   W25qxx_WriteEnable();
   W25qxxSet();
   (*cmdp++) = (0x52);
-  cmdp += W25qxx_AddressCmds(cmdp, Addr);
+  cmdp = W25qxx_AddressCmds(cmdp, Addr);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
   W25qxxUnset();
   return true;
@@ -513,7 +512,7 @@ bool 	W25qxx_IsEmptyPage(uint32_t Page_Address,uint32_t OffsetInByte,uint32_t Nu
 	    uint32_t WorkAddress=(i+Page_Address*w25qxx.PageSize);
 		W25qxxSet();
 		(*cmdp++) = (0x0B);
-		  cmdp += W25qxx_AddressCmds(cmdp, WorkAddress);
+		  cmdp = W25qxx_AddressCmds(cmdp, WorkAddress);
 		(*cmdp++) = (0);
 		  W25qxx_SpiTx(cmd, cmdp-cmd, 100);
 		  W25qxx_SpiRx(pBuffer,sizeof(pBuffer), 100);
@@ -533,7 +532,7 @@ bool 	W25qxx_IsEmptyPage(uint32_t Page_Address,uint32_t OffsetInByte,uint32_t Nu
 		    uint32_t WorkAddress=(i+Page_Address*w25qxx.PageSize);
 			W25qxxSet();
 			(*cmdp++) = (0x0B);
-			  cmdp += W25qxx_AddressCmds(cmdp, WorkAddress);
+			cmdp = W25qxx_AddressCmds(cmdp, WorkAddress);
 			(*cmdp++) = (0);
 			  W25qxx_SpiTx(cmd, cmdp-cmd, 100);
 			  W25qxx_SpiRx(pBuffer, 1, 100);
@@ -576,7 +575,7 @@ bool 	W25qxx_IsEmptySector(uint32_t Sector_Address,uint32_t OffsetInByte,uint32_
 	    uint32_t WorkAddress=(i+Sector_Address*w25qxx.SectorSize);
 		W25qxxSet();
 		(*cmdp++) = (0x0B);
-		  cmdp += W25qxx_AddressCmds(cmdp, WorkAddress);
+		cmdp = W25qxx_AddressCmds(cmdp, WorkAddress);
 		(*cmdp++) = (0);
 		  W25qxx_SpiTx(cmd, cmdp-cmd, 100);
 		  W25qxx_SpiRx(pBuffer, sizeof(pBuffer), 100);
@@ -596,7 +595,7 @@ bool 	W25qxx_IsEmptySector(uint32_t Sector_Address,uint32_t OffsetInByte,uint32_
 		    uint32_t WorkAddress=(i+Sector_Address*w25qxx.SectorSize);
 			W25qxxSet();
 			(*cmdp++) = (0x0B);
-			  cmdp += W25qxx_AddressCmds(cmdp, WorkAddress);
+			cmdp = W25qxx_AddressCmds(cmdp, WorkAddress);
 			(*cmdp++) = (0);
 			  W25qxx_SpiTx(cmd, cmdp-cmd, 100);
 			  W25qxx_SpiRx(pBuffer, 1, 100);
@@ -639,7 +638,7 @@ bool 	W25qxx_IsEmptyBlock(uint32_t Block_Address,uint32_t OffsetInByte,uint32_t 
 		uint32_t WorkAddress=(i+Block_Address*w25qxx.BlockSize);
 		W25qxxSet();
 		(*cmdp++) = (0x0B);
-		  cmdp += W25qxx_AddressCmds(cmdp, WorkAddress);
+		cmdp = W25qxx_AddressCmds(cmdp, WorkAddress);
 		(*cmdp++) = (0);
 		  W25qxx_SpiTx(cmd, cmdp-cmd, 100);
 		  W25qxx_SpiRx(pBuffer, sizeof(pBuffer), 100);
@@ -659,7 +658,7 @@ bool 	W25qxx_IsEmptyBlock(uint32_t Block_Address,uint32_t OffsetInByte,uint32_t 
 		    uint32_t WorkAddress=(i+Block_Address*w25qxx.BlockSize);
 			W25qxxSet();
 			(*cmdp++) = (0x0B);
-			  cmdp += W25qxx_AddressCmds(cmdp, WorkAddress);
+			cmdp = W25qxx_AddressCmds(cmdp, WorkAddress);
 			(*cmdp++) = (0);
 			  W25qxx_SpiTx(cmd, cmdp-cmd, 100);
 			  W25qxx_SpiRx(pBuffer, 1, 100);
@@ -696,7 +695,7 @@ bool W25qxx_WriteByte_Initiate(uint8_t pBuffer, uint32_t WriteAddr_inBytes)
   W25qxx_WriteEnable();
   W25qxxSet();
   (*cmdp++) = (0x02);
-  cmdp += W25qxx_AddressCmds(cmdp, WriteAddr_inBytes);
+  cmdp = W25qxx_AddressCmds(cmdp, WriteAddr_inBytes);
   (*cmdp++) = (pBuffer);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
   W25qxxUnset();
@@ -730,7 +729,7 @@ bool W25qxx_WritePage_Initiate(uint8_t *pBuffer	,uint32_t Page_Address,uint32_t 
   W25qxx_WriteEnable();
   W25qxxSet();
   (*cmdp++) = (0x02);
-  cmdp += W25qxx_AddressCmds(cmdp, Addr);
+  cmdp = W25qxx_AddressCmds(cmdp, Addr);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
   W25qxx_SpiTx(pBuffer,NumByteToWrite_up_to_PageSize, 100);
   W25qxxUnset();
@@ -834,7 +833,7 @@ bool W25qxx_ReadByte_Initiate(uint8_t *pBuffer,uint32_t Bytes_Address)
   uint8_t cmd[16], *cmdp = cmd;
   W25qxxSet();
   (*cmdp++) = (0x0B);
-  cmdp += W25qxx_AddressCmds(cmdp, Bytes_Address);
+  cmdp = W25qxx_AddressCmds(cmdp, Bytes_Address);
   (*cmdp++) = (0);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
   *pBuffer = W25qxx_Spi(W25QXX_DUMMY_BYTE);
@@ -861,7 +860,7 @@ bool W25qxx_ReadBytes_Initiate(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t Num
   uint8_t cmd[16], *cmdp = cmd;
   W25qxxSet();
   (*cmdp++) = (0x0B);
-  cmdp += W25qxx_AddressCmds(cmdp, ReadAddr);
+  cmdp = W25qxx_AddressCmds(cmdp, ReadAddr);
   (*cmdp++) = (0);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
   W25qxx_SpiRx(pBuffer,NumByteToRead,2000);
@@ -894,7 +893,7 @@ bool W25qxx_ReadPage_Initiate(uint8_t *pBuffer,uint32_t Page_Address,uint32_t Of
   uint32_t Addr = Page_Address*w25qxx.PageSize+OffsetInByte;
   W25qxxSet();
   (*cmdp++) = (0x0B);
-  cmdp += W25qxx_AddressCmds(cmdp, Addr);
+  cmdp = W25qxx_AddressCmds(cmdp, Addr);
   (*cmdp++) = (0);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
   W25qxx_SpiRx(pBuffer,NumByteToRead_up_to_PageSize, 100);
