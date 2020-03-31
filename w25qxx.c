@@ -21,8 +21,8 @@ w25qxx_t	w25qxx;
 
 #define W25qxx_Lock() (w25qxx.Lock = 1)
 #define W25qxx_Unlock() (w25qxx.Lock = 0)
-#define W25qxx_WaitAndLock() do { if(!w25qxx.Lock) { W25qxx_Lock(); break; } else W25qxx_Wait(); } while(1)
 #define W25qxx_IsLocked() (w25qxx.Lock)
+#define W25qxx_WaitAndLock() do { if(!W25qxx_IsLocked()) { W25qxx_Lock(); break; } else W25qxx_Wait(); } while(true)
 
 // re-#define often used HAL function for speedup (esp. with constant PinState)
 #define HAL_GPIO_WritePin(GPIOx,GPIO_Pin,PinState) \
@@ -63,6 +63,7 @@ static uint8_t W25qxx_Spi(uint8_t Data)
 static void W25qxx_SpiTx(uint8_t *Data, uint16_t size, uint32_t timeout)
 {
 #if _W25QXX_USE_DMA == 1
+  while(W25qxx_DMA_busy) __WFI();
   W25qxx_DMA_busy = true;
   HAL_SPI_Transmit_DMA(&_W25QXX_SPI, Data, size);
 #else
@@ -73,6 +74,7 @@ static void W25qxx_SpiTx(uint8_t *Data, uint16_t size, uint32_t timeout)
 static void W25qxx_SpiRx(uint8_t *Data, uint16_t size, uint32_t timeout)
 {
 #if _W25QXX_USE_DMA == 1
+  while(W25qxx_DMA_busy) __WFI();
   W25qxx_DMA_busy = true;
   HAL_SPI_Receive_DMA(&_W25QXX_SPI, Data, size);
 #else
@@ -109,7 +111,7 @@ static void W25qxx_WriteEnable(void)
   W25qxxSet();
   W25qxx_Spi(0x06);
   W25qxxUnset();
-	W25qxx_Wait();
+  W25qxx_Wait();
 }
 //###################################################################################################################
 static void W25qxx_WriteDisable(void)
@@ -117,7 +119,7 @@ static void W25qxx_WriteDisable(void)
   W25qxxSet();
   W25qxx_Spi(0x04);
   W25qxxUnset();
-	W25qxx_Wait();
+  W25qxx_Wait();
 }
 //###################################################################################################################
 static uint8_t W25qxx_ReadStatusRegister(uint8_t	SelectStatusRegister_1_2_3)
@@ -187,9 +189,7 @@ static bool W25qxx_CheckForWriteEnd(void)
 static void W25qxx_WaitForWriteEnd(void)
 {
 #if _W25QXX_USE_DMA == 1
-  do {
-	W25qxx_Wait();
-  } while(W25qxx_DMA_busy);
+  while(W25qxx_DMA_busy) __WFI();
 #endif
   W25qxxSet();
   W25qxx_Spi(0x05);
