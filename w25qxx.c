@@ -122,51 +122,67 @@ static void W25qxx_WriteDisable(void)
   W25qxx_Wait();
 }
 //###################################################################################################################
-static uint8_t W25qxx_ReadStatusRegister(uint8_t	SelectStatusRegister_1_2_3)
+static uint8_t W25qxx_ReadStatusRegister(uint8_t SelectStatusRegister_1_2_3)
 {
-	uint8_t	status=0;
+  uint8_t status=0;
   W25qxxSet();
-	if(SelectStatusRegister_1_2_3==1)
-	{
-		W25qxx_Spi(0x05);
-		status=W25qxx_Spi(W25QXX_DUMMY_BYTE);	
-		w25qxx.StatusRegister1 = status;
-	}
-	else if(SelectStatusRegister_1_2_3==2)
-	{
-		W25qxx_Spi(0x35);
-		status=W25qxx_Spi(W25QXX_DUMMY_BYTE);	
-		w25qxx.StatusRegister2 = status;
-	}
-	else
-	{
-		W25qxx_Spi(0x15);
-		status=W25qxx_Spi(W25QXX_DUMMY_BYTE);	
-		w25qxx.StatusRegister3 = status;
-	}	
+  switch(SelectStatusRegister_1_2_3) {
+    case 1:
+    {
+      W25qxx_Spi(0x05);
+      status=W25qxx_Spi(W25QXX_DUMMY_BYTE);
+      w25qxx.StatusRegister1 = status;
+      break;
+    }
+    case 2:
+    {
+      W25qxx_Spi(0x35);
+      status=W25qxx_Spi(W25QXX_DUMMY_BYTE);
+      w25qxx.StatusRegister2 = status;
+      break;
+    }
+    case 3:
+    {
+      W25qxx_Spi(0x15);
+      status=W25qxx_Spi(W25QXX_DUMMY_BYTE);
+      w25qxx.StatusRegister3 = status;
+      break;
+    }
+    default:
+      break;
+  }
   W25qxxUnset();
-	return status;
+  return status;
 }
 //###################################################################################################################
-static void W25qxx_WriteStatusRegister(uint8_t	SelectStatusRegister_1_2_3,uint8_t Data)
+static void W25qxx_WriteStatusRegister(uint8_t SelectStatusRegister_1_2_3, uint8_t Data)
 {
   W25qxxSet();
-	if(SelectStatusRegister_1_2_3==1)
-	{
-		W25qxx_Spi(0x01);
-		w25qxx.StatusRegister1 = Data;
-	}
-	else if(SelectStatusRegister_1_2_3==2)
-	{
-		W25qxx_Spi(0x31);
-		w25qxx.StatusRegister2 = Data;
-	}
-	else
-	{
-		W25qxx_Spi(0x11);
-		w25qxx.StatusRegister3 = Data;
-	}
-	W25qxx_Spi(Data);
+  switch(SelectStatusRegister_1_2_3) {
+    case 1:
+    {
+      W25qxx_Spi(0x01);
+      w25qxx.StatusRegister1 = Data;
+      W25qxx_Spi(Data);
+      break;
+    }
+    case 2:
+    {
+      W25qxx_Spi(0x31);
+      w25qxx.StatusRegister2 = Data;
+      W25qxx_Spi(Data);
+      break;
+    }
+    case 3:
+    {
+      W25qxx_Spi(0x11);
+      w25qxx.StatusRegister3 = Data;
+      W25qxx_Spi(Data);
+      break;
+    }
+    default:
+      break;
+  }
   W25qxxUnset();
 }
 //###################################################################################################################
@@ -175,14 +191,9 @@ static bool W25qxx_CheckForWriteEnd(void)
 #if _W25QXX_USE_DMA == 1
   if(W25qxx_DMA_busy) return false;
 #endif
-  W25qxx_Wait();
-  W25qxxSet();
-  // Read status register 1
-  W25qxx_Spi(0x05);
-  w25qxx.StatusRegister1 = W25qxx_Spi(W25QXX_DUMMY_BYTE);
-  W25qxxUnset();
+  uint8_t state = W25qxx_ReadStatusRegister(1);
   // Bit 1 set means busy
-  bool rdy = !(w25qxx.StatusRegister1 & 0x01);
+  bool rdy = !(state & 0x01);
   return rdy;
 }
 //###################################################################################################################
@@ -196,7 +207,7 @@ static void W25qxx_WaitForWriteEnd(void)
   do
   {
     w25qxx.StatusRegister1 = W25qxx_Spi(W25QXX_DUMMY_BYTE);
-		W25qxx_Wait();
+//    W25qxx_Wait();
   }
   while (w25qxx.StatusRegister1 & 0x01);
  W25qxxUnset();
@@ -242,6 +253,7 @@ bool	W25qxx_Init(void)
 		W25qxx_Wait();
   W25qxxUnset();
   W25qxx_Delay(100);
+  uint8_t status = W25qxx_ReadStatusRegister(1);
 	uint32_t	id;
 	#if (_W25QXX_DEBUG==1)
 	printf("w25qxx Init Begin...\r\n");
