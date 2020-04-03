@@ -2,6 +2,8 @@
 #include "w25qxx.h"
 #include "w25qxxConf.h"
 
+#include <assert.h>
+
 #if (_W25QXX_DEBUG==1)
 #include <stdio.h>
 #endif
@@ -34,10 +36,15 @@ w25qxx_t	w25qxx;
 
 //###################################################################################################################
 #if _W25QXX_USE_DMA == 1
+
+HAL_StatusTypeDef HAL_SPI_TransmitReceive_DMA_w25qxx(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData,
+                                              uint16_t Size);
+
 static volatile bool W25qxx_DMA_busy = false;
 
 static void W25qxx_DMA_Callback(SPI_HandleTypeDef *hspi)
 {
+  W25qxxUnset();
   W25qxx_DMA_busy = false;
 }
 #endif
@@ -60,27 +67,11 @@ static uint8_t W25qxx_Spi(uint8_t Data)
   return ret;
 }
 //###################################################################################################################
-static void W25qxx_SpiTx(uint8_t *Data, uint16_t size, uint32_t timeout)
-{
-#if _W25QXX_USE_DMA == 1
-  while(W25qxx_DMA_busy) __WFI();
-  W25qxx_DMA_busy = true;
-  HAL_SPI_Transmit_DMA(&_W25QXX_SPI, Data, size);
-#else
-  HAL_SPI_Transmit(&_W25QXX_SPI, Data, size, timeout);
-#endif
-}
+#define W25qxx_SpiTx(Data, size, timeout) \
+  HAL_SPI_Transmit(&_W25QXX_SPI, Data, size, timeout)
 //###################################################################################################################
-static void W25qxx_SpiRx(uint8_t *Data, uint16_t size, uint32_t timeout)
-{
-#if _W25QXX_USE_DMA == 1
-  while(W25qxx_DMA_busy) __WFI();
-  W25qxx_DMA_busy = true;
-  HAL_SPI_Receive_DMA(&_W25QXX_SPI, Data, size);
-#else
-  HAL_SPI_Receive(&_W25QXX_SPI, Data, size, timeout);
-#endif
-}
+#define W25qxx_SpiRx(Data, size, timeout) \
+  HAL_SPI_Receive(&_W25QXX_SPI, Data, size, timeout)
 //###################################################################################################################
 uint32_t W25qxx_ReadID(void)
 {
@@ -191,6 +182,7 @@ static bool W25qxx_CheckForWriteEnd(void)
 #if _W25QXX_USE_DMA == 1
   if(W25qxx_DMA_busy) return false;
 #endif
+  W25qxxSet();
   uint8_t state = W25qxx_ReadStatusRegister(1);
   // Bit 1 set means busy
   bool rdy = !(state & 0x01);
@@ -204,12 +196,9 @@ static void W25qxx_WaitForWriteEnd(void)
 #endif
   W25qxxSet();
   W25qxx_Spi(0x05);
-  do
-  {
+  do {
     w25qxx.StatusRegister1 = W25qxx_Spi(W25QXX_DUMMY_BYTE);
-//    W25qxx_Wait();
-  }
-  while (w25qxx.StatusRegister1 & 0x01);
+  } while (w25qxx.StatusRegister1 & 0x01);
  W25qxxUnset();
 }
 //###################################################################################################################
@@ -244,6 +233,32 @@ bool W25qxx_CheckForReadEndAndUnlock()
     W25qxx_Unlock();
   }
   return rdy;
+}
+//###################################################################################################################
+static void W25qxx_SpiTx_DMA(uint8_t *Data, uint16_t size, uint32_t timeout)
+{
+#if _W25QXX_USE_DMA == 1
+  while(W25qxx_DMA_busy) __WFI();
+  W25qxx_DMA_busy = true;
+  HAL_SPI_Transmit_DMA(&_W25QXX_SPI, Data, size);
+  // /CS will be unset by DMA callback
+#else
+  W25qxx_SpiTx(Data, size, timeout);
+  W25qxx_Unset();
+#endif
+}
+//###################################################################################################################
+static void W25qxx_SpiRx_DMA(uint8_t *Data, uint16_t size, uint32_t timeout)
+{
+#if _W25QXX_USE_DMA == 1
+  while(W25qxx_DMA_busy) __WFI();
+  W25qxx_DMA_busy = true;
+  HAL_SPI_Receive_DMA(&_W25QXX_SPI, Data, size);
+  // /CS will be unset by DMA callback
+#else
+  W25qxx_SpiRx(Data, size, timeout);
+  W25qxx_Unset();
+#endif
 }
 //###################################################################################################################
 bool	W25qxx_Init(void)
@@ -366,6 +381,7 @@ bool	W25qxx_Init(void)
 #if _W25QXX_USE_DMA == 1
 	HAL_SPI_RegisterCallback(&_W25QXX_SPI, HAL_SPI_TX_COMPLETE_CB_ID, W25qxx_DMA_Callback);
 	HAL_SPI_RegisterCallback(&_W25QXX_SPI, HAL_SPI_RX_COMPLETE_CB_ID, W25qxx_DMA_Callback);
+	HAL_SPI_RegisterCallback(&_W25QXX_SPI, HAL_SPI_TX_RX_COMPLETE_CB_ID, W25qxx_DMA_Callback);
 #endif
   W25qxx_Unlock();
 	return true;
@@ -743,8 +759,8 @@ bool W25qxx_WritePage_Initiate(uint8_t *pBuffer	,uint32_t Page_Address,uint32_t 
   (*cmdp++) = (0x02);
   cmdp = W25qxx_AddressCmds(cmdp, Addr);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
-  W25qxx_SpiTx(pBuffer,NumByteToWrite_up_to_PageSize, 100);
-  W25qxxUnset();
+  W25qxx_SpiTx_DMA(pBuffer,NumByteToWrite_up_to_PageSize, 100);
+//  /CS unset done
   return true;
 }
 //###################################################################################################################
@@ -875,8 +891,8 @@ bool W25qxx_ReadBytes_Initiate(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t Num
   cmdp = W25qxx_AddressCmds(cmdp, ReadAddr);
   (*cmdp++) = (0);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
-  W25qxx_SpiRx(pBuffer,NumByteToRead,2000);
-  W25qxxUnset();
+  W25qxx_SpiRx_DMA(pBuffer,NumByteToRead,2000);
+  //  /CS unset done
   return true;
 }
 //###################################################################################################################
@@ -908,8 +924,11 @@ bool W25qxx_ReadPage_Initiate(uint8_t *pBuffer,uint32_t Page_Address,uint32_t Of
   cmdp = W25qxx_AddressCmds(cmdp, Addr);
   (*cmdp++) = (0);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
-  W25qxx_SpiRx(pBuffer,NumByteToRead_up_to_PageSize, 100);
-  W25qxxUnset();
+#ifdef DEBUG
+  memset(pBuffer,0x55,NumByteToRead_up_to_PageSize);
+#endif
+  W25qxx_SpiRx_DMA(pBuffer,NumByteToRead_up_to_PageSize, 100);
+  //  /CS unset done
   return true;
 }
 //###################################################################################################################
