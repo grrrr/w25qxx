@@ -37,14 +37,13 @@ w25qxx_t	w25qxx;
 //###################################################################################################################
 #if _W25QXX_USE_DMA == 1
 
-HAL_StatusTypeDef HAL_SPI_TransmitReceive_DMA_w25qxx(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData,
-                                              uint16_t Size);
-
 static volatile bool W25qxx_DMA_busy = false;
 
 static void W25qxx_DMA_Callback(SPI_HandleTypeDef *hspi)
 {
+  // /CS unset first
   W25qxxUnset();
+  // clearDMA busy flag
   W25qxx_DMA_busy = false;
 }
 #endif
@@ -924,9 +923,6 @@ bool W25qxx_ReadPage_Initiate(uint8_t *pBuffer,uint32_t Page_Address,uint32_t Of
   cmdp = W25qxx_AddressCmds(cmdp, Addr);
   (*cmdp++) = (0);
   W25qxx_SpiTx(cmd, cmdp-cmd, 100);
-#ifdef DEBUG
-  memset(pBuffer,0x55,NumByteToRead_up_to_PageSize);
-#endif
   W25qxx_SpiRx_DMA(pBuffer,NumByteToRead_up_to_PageSize, 100);
   //  /CS unset done
   return true;
