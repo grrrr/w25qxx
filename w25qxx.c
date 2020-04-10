@@ -243,7 +243,7 @@ static void W25qxx_SpiTx_DMA(uint8_t *Data, uint16_t size, uint32_t timeout)
   // /CS will be unset by DMA callback
 #else
   W25qxx_SpiTx(Data, size, timeout);
-  W25qxx_Unset();
+  W25qxxUnset();
 #endif
 }
 //###################################################################################################################
@@ -256,7 +256,7 @@ static void W25qxx_SpiRx_DMA(uint8_t *Data, uint16_t size, uint32_t timeout)
   // /CS will be unset by DMA callback
 #else
   W25qxx_SpiRx(Data, size, timeout);
-  W25qxx_Unset();
+  W25qxxUnset();
 #endif
 }
 //###################################################################################################################
